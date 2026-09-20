@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KaraSpot — Karaoke from your music</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700&family=Sora:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="mark">♪</span> KaraSpot</div>
+      <div class="search">
+        <span>⌕</span>
+        <input id="searchInput" placeholder="Search Spotify songs, artists, karaoke favorites…" />
+        <button class="btn primary" id="searchBtn">Search</button>
+      </div>
+      <div class="user">
+        <img id="userAvatar" alt="" style="display:none" />
+        <span id="userLabel">Not signed in</span>
+        <button class="btn" id="loginBtn">Connect Spotify</button>
+        <button class="btn ghost" id="settingsBtn">Settings</button>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <div class="panel-h">Catalog</div>
+      <div class="tabs">
+        <button class="on" data-tab="search">Search</button>
+        <button data-tab="liked">Liked</button>
+        <button data-tab="playlists">Playlists</button>
+      </div>
+      <div class="list" id="resultList">
+        <div class="empty">Connect Spotify to browse your catalog. Karaoke playback uses audio you load — Spotify cannot legally give apps raw tracks to split.</div>
+      </div>
+    </aside>
+
+    <main class="stage">
+      <div class="now">
+        <img id="nowCover" alt="" />
+        <div>
+          <h1 id="nowTitle">No song loaded</h1>
+          <p id="nowArtist">Pick a Spotify track, then attach audio</p>
+          <span class="badge" id="nowBadge" style="display:none"></span>
+        </div>
+      </div>
+      <div class="lyrics">
+        <div class="lyric" id="lyricPrev"></div>
+        <div class="lyric active" id="lyricCur">Search a song to start</div>
+        <div class="lyric next" id="lyricNext">Then drop an MP3 you own, or upload vocal + instrumental stems</div>
+      </div>
+      <div class="stage-note" id="audioStatus">No audio loaded</div>
+    </main>
+
+    <aside class="queue">
+      <div class="panel-h">
+        Queue
+        <input id="singerName" class="chip" style="width:120px;padding:6px 10px" placeholder="Singer" />
+      </div>
+      <div class="drop" id="drop">Drop an MP3 / WAV / FLAC here to sing it</div>
+      <div class="file-row">
+        <label class="btn"><input id="fileAny" type="file" accept="audio/*" hidden />Full mix</label>
+        <label class="btn"><input id="fileInst" type="file" accept="audio/*" hidden />Instrumental</label>
+        <label class="btn"><input id="fileVoc" type="file" accept="audio/*" hidden />Vocals</label>
+      </div>
+      <div class="list" id="queueList"></div>
+    </aside>
+
+    <footer class="mixer">
+      <div class="transport">
+        <button class="play" id="playBtn" title="Space">▶</button>
+        <button class="icon-btn" id="stopBtn">■</button>
+        <span class="times" id="currentTime">0:00</span>
+        <input class="seek" id="seek" type="range" min="0" max="1000" value="0" />
+        <span class="times" id="duration">0:00</span>
+      </div>
+      <div class="controls">
+        <div class="ctrl">
+          <label>Key <b id="keyVal">Original</b></label>
+          <input id="key" type="range" min="-12" max="12" value="0" />
+        </div>
+        <div class="ctrl">
+          <label>Tempo <b id="tempoVal">100%</b></label>
+          <input id="tempo" type="range" min="70" max="130" value="100" />
+        </div>
+        <div class="ctrl">
+          <label>Guide vocal <b id="vocVal">15%</b></label>
+          <input id="voc" type="range" min="0" max="100" value="15" />
+        </div>
+        <div class="ctrl">
+          <label>Backing <b id="instVal">100%</b></label>
+          <input id="inst" type="range" min="0" max="100" value="100" />
+        </div>
+      </div>
+      <div class="hint">
+        [ ] change key · Space play/pause · arrows seek<br />
+        Cleanest results: stems from Moises, LALAL.ai, or Demucs.
+      </div>
+    </footer>
+  </div>
+
+  <div class="modal-back" id="settings">
+    <div class="modal">
+      <h2>Spotify setup</h2>
+      <p>KaraSpot uses your Spotify account to search songs, liked tracks, and playlists. Stem separation and pitch shifting run on audio files you provide — Spotify’s API does not expose raw audio.</p>
+      <div class="warn-box" id="settingsMsg"></div>
+      <ol style="color:#c9c2dc;font-size:13px;line-height:1.55;padding-left:18px">
+        <li>Open the <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noreferrer">Spotify Developer Dashboard</a> and create an app.</li>
+        <li>Add this exact Redirect URI to the app settings:</li>
+      </ol>
+      <input id="redirectUri" readonly />
+      <div class="modal-actions" style="justify-content:flex-start;margin-top:8px">
+        <button class="btn" id="copyRedirect">Copy redirect URI</button>
+      </div>
+      <label for="clientId">Client ID</label>
+      <input id="clientId" placeholder="Paste your Spotify Client ID" />
+      <p>Use <code>http://127.0.0.1:5500/</code> (not localhost) when you serve the app locally. New Spotify apps require HTTPS except loopback addresses.</p>
+      <div class="modal-actions">
+        <button class="btn ghost" id="closeSettings">Close</button>
+        <button class="btn primary" id="saveSettings">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <script src="js/spotify.js"></script>
+  <script src="js/audio-engine.js"></script>
+  <script src="js/lyrics.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
